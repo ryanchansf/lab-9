@@ -19,7 +19,7 @@ execute:
 #| label: setup
 
 library(tidyverse)
-library(kableExtra)
+library(gt)
 
 set.seed(123)
 ```
@@ -77,6 +77,8 @@ results_df <- enframe(results,
 ```{r}
 #| label: table-for-random-babies
 
+# Source for gt package: https://gt.rstudio.com/
+
 results_df |>
   count(ncorrect) |>
   mutate(proportion = n / sum(n)) |>
@@ -84,7 +86,11 @@ results_df |>
          proportion) |>
   pivot_wider(names_from = ncorrect,
               values_from = proportion,
-              names_prefix = "prop_correct_")
+              names_prefix = "Babies_") |>
+  gt() |>
+  tab_header(title = "Percentage of Correct Baby Assignments",
+             subtitle = "10,000 Simulations") |>
+  fmt_percent()
 ```
 
 **3. Now create a barplot showing the proportion of simulations where 0, 1, 2, 3, and 4 babies were given to their correct parent(s).** 
@@ -196,7 +202,10 @@ all_simulations |>
   group_by(n) |>
   summarise(mean_of_means = mean(simulated_means)) |>
   rename(Sample_Size = n,
-         Mean_of_Simulated_Means = mean_of_means)
+         Mean_of_Simulated_Means = mean_of_means) |>
+  gt() |>
+  tab_header(title = "Summary of Simulated Means",
+             subtitle = "Comparison Across Different Sample Sizes")
 ```
 
 **8. Create a plot showing the distribution of simulated means from each of the simulations. Each simulation (10, 100, 1000, and 10000) should be its own facet!**
