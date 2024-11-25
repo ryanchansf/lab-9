@@ -67,7 +67,6 @@ that--it converts a vector to a data frame.
 You may find the following code helpful:
 
 ```{r}
-#| eval: false
 
 results_df <- enframe(results, 
         name = "simulation_number", 
@@ -112,7 +111,7 @@ results_df |>
   geom_bar(mapping = aes(y = after_stat(count) / sum(after_stat(count))),
            fill = "lightsalmon1") +
   labs(title = "Proportion of Correct Baby Assignments in 10,000 Simulations",
-       x = "Number of Correct Assignments",
+       x = "Number of Correct Baby Assignments",
        y = "",
        subtitle = "Proportion") +
   theme_minimal()
@@ -149,8 +148,9 @@ I've provided some skeleton code to get you started. :)
 
 ```{r}
 simulate_means <- function(n, df){
-  map_dbl(.x = n, 
-          .f = ~rchisq(n = 100, df) %>% mean()
+  map_dbl(.x = 1:n, 
+          .f = ~rchisq(n = 100,
+                       df = df) |> mean()
           )
 }
 ```
@@ -181,7 +181,7 @@ all_simulations <- grid |>
                                           df = df), 
                                 .f = simulate_means)
          ) |> 
-  unnest(simulated_means) 
+  unnest(cols = simulated_means) 
 
 ```
 
@@ -191,12 +191,12 @@ Hint: Make sure your columns have descriptive names!
 ```{r}
 #| label: table-of-simulated Means
 
+# table to summarize the means across each sample size
 all_simulations |>
-  select(n,
-         simulated_means) |>
-  pivot_wider(names_from = n,
-              values_from = simulated_means,
-              names_prefix = "simulated_means_n_")
+  group_by(n) |>
+  summarise(mean_of_means = mean(simulated_means)) |>
+  rename(Sample_Size = n,
+         Mean_of_Simulated_Means = mean_of_means)
 ```
 
 **8. Create a plot showing the distribution of simulated means from each of the simulations. Each simulation (10, 100, 1000, and 10000) should be its own facet!**
@@ -209,28 +209,28 @@ sizes between the simulations.
 ```{r}
 #| label: plot-of-simulated Means
 
-# Source for assigning labels to facets: https://ggplot2.tidyverse.org/reference/labeller.html
-
 all_simulations |>
+  mutate(n = as.character(n),
+         n = fct_recode(n,
+                        "Sample Size = 10" = "10",
+                        "Sample Size = 100" = "100",
+                        "Sample Size = 1000" = "1000",
+                        "Sample Size = 10000" = "10000")) |>
   ggplot(mapping = aes(x = simulated_means)) +
-  geom_histogram(binwidth = 0.25,
-                 fill = "springgreen4",
-                 alpha = 0.7) +
-  facet_wrap(~ n,
-            scales = "free_y",
-            labeller = labeller(n = c("10" = "Sample Size = 10",
-                                      "100" = "Sample Size = 100",
-                                      "1000" = "Sample Size = 1000",
-                                      "10000" = "Sample Size = 10000"))) +
+  geom_density(alpha = 0.6,
+               fill = "springgreen4") +
   # vertical line for true mean (df = 10)
   geom_vline(mapping = aes(xintercept = 10),
              linetype = "dashed",
              color = "firebrick") +
-  labs(title = "Distribution of Simulated Means from Different Sample Sizes",
+  facet_wrap(~ n,
+             scales = "free_y") +
+  labs(title = "Distribution of Simulated Means for Different Sample Sizes",
        x = "Simulated Means",
        y = "",
-       subtitle = "Frequency") +
+       subtitle = "Density") +
   theme_minimal()
+
 ```
 
 ## Challenge 9
